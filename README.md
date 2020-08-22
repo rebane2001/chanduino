@@ -1,5 +1,5 @@
 # Chanduino
-Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO-LORA32). It started off as a project to practice embedded development and was made as a present for the /mlp/ Secret Santa, but 9 months later I decided to fix it up (added HTTPS support since 4chan is HTTPS-only now) and release it.
+Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display). It started off as a project to practice embedded development and was made as a present for the /mlp/ Secret Santa, but 9 months later I decided to fix it up (added HTTPS support since 4chan is HTTPS-only now) and release it.
 
 ## [Demo video](https://www.youtube.com/watch?v=RlFtYx4oX9U)
 
