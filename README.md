@@ -26,6 +26,7 @@ Just pressing up/down buttons is self-explanatory. Holding down the up button le
 - [ArduinoJson 6.16.1](https://arduinojson.org/)
 - [TFT_eSPI 1.4.20](https://github.com/Bodmer/TFT_eSPI)
 - [TJpg_Decoder](https://github.com/Bodmer/TJpg_Decoder)
+- [Button2](https://github.com/LennartHennigs/Button2)
 
 You can flash this project with the Arudino IDE.
 
