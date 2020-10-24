@@ -32,6 +32,9 @@
 #define BUTTON_1        35
 #define BUTTON_2        0
 
+// Change this to your favorite board to have it auto-selected
+#define CHANDUINO_DEFAULTBOARD '/replaceme/'
+
 TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom library
 Button2 btn1(BUTTON_1);
 Button2 btn2(BUTTON_2);
@@ -347,6 +350,8 @@ void load_boards() {
     desc.replace("is 4chan's imageboard", "-");
     boards_ds.push_back(desc);
     boards_ws.push_back(jsonDoc["boards"][i]["ws_board"].as<int>());
+    if (desc.indexOf(CHANDUINO_DEFAULTBOARD) > 0)
+      currentreply = i;
   }
   Serial.println("END");
 }
