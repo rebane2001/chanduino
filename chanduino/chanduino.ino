@@ -63,7 +63,7 @@ const char *root_ca = PSTR( \
 // Web client settings
 const int httpPort = 443;
 const char *host = "a.4cdn.org";
-const String useragent = "Chanduino/0.2";
+const String useragent = "Chanduino/0.3";
 
 // Wifi config webserver variables
 WiFiServer server(80);
@@ -87,6 +87,12 @@ char buff[512];
 int replies[2001];
 int currentreply = 0;
 int maxreply = 0;
+
+// Hack for keeping post location
+int posts[2001];
+int savedpost = 0;
+int maxposts = 0;
+
 String tim = "";
 
 // Current board settings
@@ -142,7 +148,8 @@ void button_init() {
           multiPage = -1;
           if (viewMode == 1) {
             viewMode = 2;
-            load_posts();
+            restorePosts();
+            //load_posts();
             load_reply();
             //load_threads();
           } else if (viewMode == 2) {
@@ -202,6 +209,7 @@ void button_init() {
             draw_img(1);
           } else if (viewMode == 2) {
             thread = replies[currentreply];
+            savePosts();
             viewMode = 1;
             load_posts();
             load_reply();
@@ -655,6 +663,7 @@ void load_posts() {
   }
   currentreply = 0;
   maxreply = i - 2;
+
   Serial.println("END");
   if (maxreply == -2) {
     load_posts();
@@ -746,6 +755,24 @@ void refresh_post() {
   load_posts();
   load_reply();
   currentreply = 0;
+}
+
+// Saves posts so we can restore the position later
+void savePosts(){
+  for (int i = 0; i < 2001; i++) {
+      posts[i] = replies[i];
+  }
+  savedpost = currentreply;
+  maxposts  = maxreply;
+}
+
+// Restores posts after savePosts()
+void restorePosts(){
+  for (int i = 0; i < 2001; i++) {
+      replies[i] = posts[i];
+  }
+  currentreply = savedpost;
+  maxreply  = maxposts;
 }
 
 /* Other stuff */
