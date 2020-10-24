@@ -32,8 +32,15 @@
 #define BUTTON_1        35
 #define BUTTON_2        0
 
+// Set ENABLED to 1 to turn backlight off after TIME seconds of inactivity (no new posts and no button presses)
+#define CHANDUINO_SCREENSAVER_ENABLED 1
+#define CHANDUINO_SCREENSAVER_TIME 45
+// Set to 1 to enable threadwatcher
+// Set ENABLED to 1 to watch thread every TIME seconds after last buttonpress (DO NOT set under 10, recommended values are 30-120)
+#define CHANDUINO_THREADWATCHER_ENABLED 1
+#define CHANDUINO_THREADWATCHER_TIME 60
 // Change this to your favorite board to have it auto-selected
-#define CHANDUINO_DEFAULTBOARD '/replaceme/'
+#define CHANDUINO_DEFAULTBOARD "/replaceme/"
 
 TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom library
 Button2 btn1(BUTTON_1);
@@ -107,8 +114,18 @@ int bgcolor = 0xD6DE; //0xF71A
  * 2 - Browse threads in board
  * 3 - Browse boards
  */
-int viewMode = 1;
+int viewMode = 3;
 int wifiMode = 0;
+
+// Threadwatcher stuff
+// Timestamp of last buttonpress
+int64_t lastBtnPress = 0;
+// Timestamp of last threadrefresh
+int64_t lastRefresh = 0;
+int lastReadReply = 0;
+int newPostCount = 0;
+bool seenAllNewPosts = true;
+int oldReplies[2001];
 
 // Board list cache
 std::vector<String> boards_ds;
@@ -127,6 +144,7 @@ WiFiClientSecure client;
 void button_init() {
   // UP button
   btn1.setReleasedHandler([](Button2 & b) {
+    updateLastTimes();
     if (wifiMode == 0) {
       if (connect_wifi()) {
         unsigned int time = b.wasPressedFor();
@@ -152,9 +170,7 @@ void button_init() {
           if (viewMode == 1) {
             viewMode = 2;
             restorePosts();
-            //load_posts();
             load_reply();
-            //load_threads();
           } else if (viewMode == 2) {
             viewMode = 3;
             bgcolor = 0x2104; //light 0x2104 dark 0x18C3 green 0x554A red 0xDAAA
@@ -187,6 +203,7 @@ void button_init() {
 
   // DOWN button
   btn2.setReleasedHandler([](Button2 & b) {
+    updateLastTimes();
     if (wifiMode == 0) {
       if (connect_wifi()) {
         unsigned int time = b.wasPressedFor();
@@ -211,15 +228,19 @@ void button_init() {
           if (viewMode == 1) {
             draw_img(1);
           } else if (viewMode == 2) {
+            newPostCount = 0;
+            seenAllNewPosts = true;
             thread = replies[currentreply];
             savePosts();
             viewMode = 1;
+            draw_loading_text();
             load_posts();
             load_reply();
           } else if (viewMode == 3) {
             load_board();
             viewMode = 2;
             Serial.println(board);
+            draw_loading_text();
             load_posts();
             load_reply();
           }
@@ -589,6 +610,21 @@ void draw_reply(String jsonsnippet) {
       }
     }
   }
+  if (seenAllNewPosts){
+    lastReadReply = replies[maxreply];
+  } else {
+    tft.setTextColor(0xDAAA, bgcolor);
+    if (replies[currentreply] == lastReadReply)
+      tft.setTextColor(TFT_BLACK, 0xDAAA);
+    tft.setTextDatum(BL_DATUM);
+    if (currentreply == maxreply){
+      seenAllNewPosts = true;
+      newPostCount = 0;
+      tft.drawString("No new posts.", 9, 125);
+    }else{
+      tft.drawString(String(newPostCount) + (newPostCount == 1 ? " new post." : " new posts."), 9, 125);
+    }
+  }
   if (currentMultiPage < multiPage) {
     currentreply++;
     multiPage = -1;
@@ -611,13 +647,23 @@ void draw_reply_number() {
 }
 
 /**
- * Loads either all threads on a board or all replies on a thread.
+ * Draws loading text.
  */
-void load_posts() {
+void draw_loading_text() {
   tft.setTextSize(1);
   tft.setTextDatum(MC_DATUM);
   tft.setTextColor(0xD800, bgcolor);
   tft.drawString("Loading...", tft.width() / 2, tft.height() / 2);
+}
+
+/**
+ * Loads either all threads on a board or all replies on a thread.
+ */
+void load_posts() {
+  // Wipe replies to avoid bugs
+  for (int i = 0; i < 2001; i++) {
+    replies[i] = 0;
+  }
 
   Serial.print("\r\nConnecting to ");
   Serial.println(host);
@@ -755,13 +801,6 @@ void draw_img(bool full) {
   TJpgDec.drawJpg(full ? 120 - (w / 2) : 6, full ? 68 - (h / 2) : 6, PicArray, sizeof(PicArray));
 }
 
-// Not implemented as of right now
-void refresh_post() {
-  load_posts();
-  load_reply();
-  currentreply = 0;
-}
-
 // Saves posts so we can restore the position later
 void savePosts(){
   for (int i = 0; i < 2001; i++) {
@@ -778,6 +817,93 @@ void restorePosts(){
   }
   currentreply = savedpost;
   maxreply  = maxposts;
+}
+
+void updateLastTimes(){
+  lastBtnPress = esp_timer_get_time();
+  lastRefresh = esp_timer_get_time();
+}
+
+/**
+ * Check for new replies in a thread and notify.
+ * Code is overengineered and ugly because we
+ * want to handle cases where replies are deleted.
+ */
+void threadwatcherUpdate(){
+  Serial.println("Checking for new replies...");
+  // Save old variables and reload the posts
+  for (int i = 0; i < 2001; i++) {
+    oldReplies[i] = replies[i];
+  }
+  int oldMax = maxreply;
+  int oldcurrentreply = currentreply;
+  load_posts();
+  currentreply = oldcurrentreply;
+
+  // Check how many new posts
+  int newPostCountTemp = 0;
+  for (int i = 0; i <= maxreply; i++) {
+    bool exists = false;
+    for (int j = 0; j <= oldMax; j++) {
+      if (replies[i] == oldReplies[j]){
+        exists = true;
+        break;
+      }
+    }
+    if (!exists) {
+      newPostCountTemp++;
+      Serial.println("Detected new post: " + String(replies[i]) + " at ID " + String(i));
+    }
+  }
+
+  // Check if our old selected reply still exists and is the same ID
+  if (oldReplies[oldcurrentreply] != replies[oldcurrentreply]){
+    // Oh no, we couldn't find it
+    // Let's search for it and fallback to previous posts if we can't find it
+    Serial.println("Current reply has moved, investigating");
+    currentreply = 0;
+    for (int i = oldcurrentreply; i > 0; i--) {
+      for (int j = 0; j <= maxreply; j++) {
+        if (oldReplies[i] == replies[j]){
+          // We found a match, set it as our current reply
+          Serial.println("We found a match, set it as our current reply");
+          currentreply = j;
+          // If we are loading a different post than the original, disable multipage
+          if (replies[currentreply] != oldReplies[oldcurrentreply]){
+            Serial.println("Current reply deleted, loading the closest older one.");
+            multiPage = -1;
+          }
+          break;
+        }
+      }
+      if (currentreply > 0)
+        break;
+    }
+  }
+
+  if (newPostCountTemp > 0){
+    Serial.println("Found " + String(newPostCountTemp) + " new replies.");
+    newPostCount += newPostCountTemp;
+    seenAllNewPosts = false;
+    load_reply();
+    updateLastTimes();
+  } else {
+    Serial.println("Found no new replies.");
+  }
+}
+
+void time_loop(){
+  // Screensaver
+  if (CHANDUINO_SCREENSAVER_ENABLED && (esp_timer_get_time() - lastBtnPress) > CHANDUINO_SCREENSAVER_TIME*1000000){
+    digitalWrite(TFT_BL, LOW);
+  } else {
+    digitalWrite(TFT_BL, TFT_BACKLIGHT_ON);
+  }
+  // Threadwatcher
+  if (CHANDUINO_THREADWATCHER_ENABLED && viewMode == 1 && (esp_timer_get_time() - lastRefresh) > CHANDUINO_THREADWATCHER_TIME*1000000){
+    threadwatcherUpdate();
+    lastRefresh = esp_timer_get_time();
+  }
 }
 
 /* Other stuff */
@@ -833,6 +959,7 @@ void loop() {
     wifiLoop();
   }
   button_loop();
+  time_loop();
 }
 
 void wifi_scan() {

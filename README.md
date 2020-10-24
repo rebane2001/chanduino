@@ -11,6 +11,8 @@ Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display
 - Zoom into images (fullscreen)
 - Compact UI styled after Yotsuba/Yotsuba B
 - Multi-screen posts (if there is too much text for one screen)
+- Screensaver (turn off screen after inactivity)
+- Threadwatcher (turn on screen on new posts)
 - HTTPS and keep-alive support
 - Doesn't let you respond to bait
 - Doesn't crash most of the time
@@ -21,6 +23,21 @@ Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display
 On first launch or if no WiFi is found, Chanduino will create a WiFi hotspot which you can use to set up a WiFi connection for it. The SSID/password will be saved into flash and Chanduino will boot straight into the main menu next time.
 
 Just pressing up/down buttons is self-explanatory. Holding down the up button lets you go upwards (from thread to board to boards selection). It also lets you navigate the boards selection faster. Holding the down button does the opposite (goes from boards selectin to board to thread) and also lets you view images in threads in fullscreen.
+
+If you don't press any buttons for some time, Chanduino will turn off the screen (this can be disabled in the configuration section). If you load a thread and don't touch Chanduino for a while, it'll check for new posts from time to time and wake up the screen if new posts are found.
+
+# Configuration
+You can change some of the settings through editing `#define`s in `chanduino.ino`:  
+ - CHANDUINO_SCREENSAVER_ENABLED 0/1
+   - Turn screensaver on/off
+ - CHANDUINO_SCREENSAVER_TIME 45
+   - Change how long until screen turns off (seconds)
+ - CHANDUINO_THREADWATCHER_ENABLED 0/1
+   - Turn threadwatcher on/off
+ - CHANDUINO_THREADWATCHER_TIME 60
+   - Change how often threadwatcher should check for new posts (seconds)
+ - CHANDUINO_DEFAULTBOARD "/replaceme/"
+   - Auto-select a board of your choice on startup
 
 # Dependencies
 - [ArduinoJson 6.16.1](https://arduinojson.org/)
