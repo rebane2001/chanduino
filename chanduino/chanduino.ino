@@ -73,7 +73,7 @@ const char *root_ca = PSTR( \
 // Web client settings
 const int httpPort = 443;
 const char *host = "a.4cdn.org";
-const String useragent = "Chanduino/0.3";
+const String useragent = "Chanduino/0.4";
 
 // Wifi config webserver variables
 WiFiServer server(80);
