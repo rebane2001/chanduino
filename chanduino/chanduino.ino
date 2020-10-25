@@ -701,15 +701,18 @@ void load_posts() {
   // This part has some horrible buffer code
   // because I'm not familiar with C
   while (client.readStringUntil('\n') != "\r") {}
-  //while (client.available()) {
-  while (1) {
+  while (client.peek() != '0') {
     // Get current chunk len
     int chunklen = (int)strtol(client.readStringUntil('\r').c_str(), NULL, 16);
-    if (chunklen == 0)
-      break;
     client.readStringUntil('\n');
-    //Serial.println("CHUNK LEN: " + String(chunklen));
+    Serial.println("CHUNK LEN: " + String(chunklen));
+    if (chunklen == 0){
+      Serial.println("Retrying...");
+      load_posts();
+      return;
+    }
     while (chunklen > 0){
+      while (!client.available()){}
       char currentByte = client.read();
       //Serial.print(currentByte);
       buff[buffloc] = currentByte;
