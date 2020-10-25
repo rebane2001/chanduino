@@ -88,11 +88,10 @@ String board = "";
 int thread = 0;
 // Posts per page of current board
 int perPage = 15;
-bool foundPost = false;
 // If a post is too long, split it into multiple "pages" (-1 = no split)
 int multiPage = -1;
 
-char buff[512];
+char buff[32768]; //32K
 
 int replies[2001];
 int currentreply = 0;
@@ -298,6 +297,7 @@ void load_board() {
     return;
   }
 
+  Serial.print("GET /boards.json HTTP/1.1\r\n");
   client.print("GET /boards.json HTTP/1.1\r\n");
   client.print("Host: " + (String)host + "\r\n");
   client.print("User-Agent: " + useragent + "\r\n");
@@ -336,7 +336,7 @@ void load_board() {
  * Loads list of boards.
  */
 void load_boards() {
-  DynamicJsonDocument jsonDoc(1024 * 96);
+  DynamicJsonDocument jsonDoc(1024 * 16);
   HTTPClient http;
 
   Serial.print("\r\njsonDoc capacity: ");
@@ -432,6 +432,7 @@ void load_reply() {
 
   if (viewMode == 2)
     thread = replies[currentreply];
+  Serial.print("GET /" + board + "/thread/" + String(thread) + ".json HTTP/1.1\r\n");
   client.print("GET /" + board + "/thread/" + String(thread) + ".json HTTP/1.1\r\n");
   client.print("Host: " + (String)host + "\r\n");
   client.print("User-Agent: " + useragent + "\r\n");
@@ -439,43 +440,98 @@ void load_reply() {
   client.print("Keep-Alive: timeout=30, max=1000\r\n");
   client.print("Cache-Control: no-cache\r\n\r\n");
 
-  client.readStringUntil('{');
-  Serial.println("START");
-  foundPost = false;
-  while (client.available()) {
-    String line = client.readStringUntil('"');
-    if (line == "no") {
-      client.readStringUntil(':');
-      String line2 = client.readStringUntil(',');
-      if (String(replies[currentreply]) == line2) {
-        Serial.println("Got it!");
-        String jsonsnippet = String("{" + client.readStringUntil('}') + "}");
-        draw_reply(jsonsnippet);
-        draw_reply_number();
-        foundPost = true;
-        break;
-      }
+  // 0 - searching for quotes
+  // 1 - searching for colon
+  // 2 - searching for comma
+  // 3 - searching for closing bracket
+  // 4 - searching for the meaning of life
+  int mode = 0;
+  int buffloc = 0;
+
+  bool foundPost = false;
+
+  while (client.readStringUntil('\n') != "\r") {}
+  while (client.peek() != '0') {
+    // Get current chunk len
+    int chunklen = (int)strtol(client.readStringUntil('\r').c_str(), NULL, 16);
+    client.readStringUntil('\n');
+    Serial.println("CHUNK LEN: " + String(chunklen));
+    if (chunklen == 0){
+      Serial.println("Retrying...");
+      load_reply();
+      return;
     }
+    while (chunklen > 0){
+      while (!client.available()){}
+      char currentByte = client.read();
+      chunklen--;
+      if (mode == 4)
+        continue;
+      buff[buffloc] = currentByte;
+      // Set string end byte to nullbyte just in case
+      buff[buffloc + 1] = 0;
+
+      if (mode == 0 && currentByte == '"'){
+        if (strncmp(buff,"\"no\"",4) == 0){
+          mode = 1;
+        }
+        buffloc = 0;
+      } else if (mode == 1 && currentByte == ':'){
+        mode = 2;
+        buffloc = -1;
+      } else if (mode == 2 && currentByte == ','){
+        buff[buffloc] = 0;
+        if (String(buff).toInt() == replies[currentreply]) {
+          Serial.println("Found reply, loading...");
+          mode = 3;
+        } else {
+          mode = 0;
+        }
+        buffloc = 0;
+      } else if (mode == 3 && currentByte == '}'){
+        buff[0] = '{';
+        Serial.println("Reply loaded.");
+        foundPost = true;
+        mode = 4;
+        continue;
+      }
+
+      if (buffloc == 0){
+        buff[buffloc] = currentByte;
+        buff[buffloc + 1] = 0;
+      }
+
+      if (buffloc > 32766)
+        buffloc = 0;
+      buffloc++;
+    }
+    client.readStringUntil('\n');
   }
-  Serial.println("END");
+  client.readStringUntil('\n');
+
   // Artifact from an earlier version of the code.
-  // Right now it just displays "0%" if loading a
+  // Right now it just displays "..." if loading a
   // post fails and retries loading the post.
   if (!foundPost) {
     tft.setTextSize(1);
     tft.setTextDatum(MC_DATUM);
     tft.setTextColor(0x0000, bgcolor);
-    tft.drawString("0%", tft.width() / 2, tft.height() / 2);
+    tft.drawString("...", tft.width() / 2, tft.height() / 2);
     load_reply();
-  } else {
+  } else if (draw_reply(String(buff))) {
+    draw_img(0);
     draw_reply_number();
+    Serial.println("Done!");
+  } else {
+    Serial.println("Multipage reload");
+    load_reply();
   }
 }
 
 /**
  * Draws a thread or reply.
  */
-void draw_reply(String jsonsnippet) {
+bool draw_reply(String jsonsnippet) {
   DynamicJsonDocument reply(1024 * 32);  //32KB
   jsonsnippet.replace("\\u2019", "&#039;");
   jsonsnippet.replace("\\u201c", "&quot;");
@@ -625,6 +681,7 @@ void draw_reply(String jsonsnippet) {
       seenAllNewPosts = true;
       newPostCount = 0;
       tft.drawString("No new posts.", 9, 125);
+      lastReadReply = replies[maxreply];
     }else{
       tft.drawString(String(newPostCount) + (newPostCount == 1 ? " new post." : " new posts."), 9, 125);
     }
@@ -635,10 +692,9 @@ void draw_reply(String jsonsnippet) {
     if (currentreply > maxreply) {
       currentreply = 0;
     }
-    load_reply();
-    return;
+    return 0;
   }
-  draw_img(0);
+  return 1;
 }
 
 /**
@@ -678,8 +734,10 @@ void load_posts() {
   }
 
   if (viewMode == 1) {
+    Serial.print("GET /" + board + "/thread/" + String(thread) + ".json HTTP/1.1\r\n");
     client.print("GET /" + board + "/thread/" + String(thread) + ".json HTTP/1.1\r\n");
   } else {
+    Serial.print("GET /" + board + "/catalog.json HTTP/1.1\r\n");
     client.print("GET /" + board + "/catalog.json HTTP/1.1\r\n");
   }
   client.print("Host: " + (String)host + "\r\n");
@@ -688,7 +746,6 @@ void load_posts() {
   client.print("Keep-Alive: timeout=30, max=1000\r\n");
   client.print("Cache-Control: no-cache\r\n\r\n");
 
-  Serial.println("START");
   int i = 0;
   int currentpost = 0; //only used for viewMode 2
 
@@ -749,17 +806,18 @@ void load_posts() {
         buff[buffloc + 1] = 0;
       }
 
-      if (buffloc > 500)
+      if (buffloc > 32766)
         buffloc = 0;
       buffloc++;
       chunklen--;
     }
     client.readStringUntil('\n');
   }
+  client.readStringUntil('\n');
+  Serial.print("Posts loaded!\r\n");
   currentreply = 0;
   maxreply = i - 1;
 
-  Serial.println("END");
   if (maxreply == -1) {
     load_posts();
   }
@@ -777,7 +835,7 @@ void draw_img(bool full) {
 
   connectToa4cdn();
 
-  Serial.println("GET /" + board + "/" + tim + "s.jpg HTTP/1.1\r\n");
+  Serial.print("GET /" + board + "/" + tim + "s.jpg HTTP/1.1\r\n");
   client.print("GET /" + board + "/" + tim + "s.jpg HTTP/1.1\r\n");
   client.print("Host: i.4cdn.org\r\n");
   client.print("User-Agent: " + useragent + "\r\n");
@@ -1004,38 +1062,6 @@ void loop() {
   }
   button_loop();
   time_loop();
-}
-
-void wifi_scan() {
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextDatum(MC_DATUM);
-  tft.setTextSize(1);
-
-  tft.drawString("Scan Network", tft.width() / 2, tft.height() / 2);
-
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-
-  int16_t n = WiFi.scanNetworks();
-  tft.fillScreen(TFT_BLACK);
-  if (n == 0) {
-    tft.drawString("no networks found", tft.width() / 2, tft.height() / 2);
-  } else {
-    tft.setTextDatum(TL_DATUM);
-    tft.setCursor(0, 0);
-    Serial.printf("Found %d net\n", n);
-    for (int i = 0; i < n; ++i) {
-      sprintf(buff,
-              "[%d]:%s(%d)",
-              i + 1,
-              WiFi.SSID(i).c_str(),
-              WiFi.RSSI(i));
-      tft.println(buff);
-    }
-  }
-  WiFi.mode(WIFI_OFF);
 }
 
 /**
