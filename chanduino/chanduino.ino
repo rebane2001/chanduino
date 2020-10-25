@@ -127,6 +127,8 @@ int newPostCount = 0;
 bool seenAllNewPosts = true;
 int oldReplies[2001];
 
+// Chunked encoding can suck my [4chan pass]
+
 // Board list cache
 std::vector<String> boards_ds;
 std::vector<bool> boards_ws;
@@ -199,6 +201,7 @@ void button_init() {
         return;
       }
     }
+    updateLastTimes();
   });
 
   // DOWN button
@@ -259,6 +262,7 @@ void button_init() {
         return;
       }
     }
+    updateLastTimes();
   });
 }
 
@@ -684,39 +688,76 @@ void load_posts() {
   client.print("Keep-Alive: timeout=30, max=1000\r\n");
   client.print("Cache-Control: no-cache\r\n\r\n");
 
-  //memset(replies, 0, sizeof(replies));
-
-  client.readStringUntil('{');
   Serial.println("START");
   int i = 0;
   int currentpost = 0; //only used for viewMode 2
-  while (client.available()) {
-    while (client.available()) {
-      String line = client.readStringUntil('"');
-      if (line == "no") {
-        break;
-      } else if (line == "replies") {
-        if (viewMode == 2) {
+
+  // 0 - searching for quotes
+  // 1 - searching for colon
+  // 2 - searching for comma
+  int mode = 0;
+  int buffloc = 0;
+  // Chunked encoding hack
+  // This part has some horrible buffer code
+  // because I'm not familiar with C
+  while (client.readStringUntil('\n') != "\r") {}
+  //while (client.available()) {
+  while (1) {
+    // Get current chunk len
+    int chunklen = (int)strtol(client.readStringUntil('\r').c_str(), NULL, 16);
+    if (chunklen == 0)
+      break;
+    client.readStringUntil('\n');
+    //Serial.println("CHUNK LEN: " + String(chunklen));
+    while (chunklen > 0){
+      char currentByte = client.read();
+      //Serial.print(currentByte);
+      buff[buffloc] = currentByte;
+      // Set string end byte to nullbyte just in case
+      buff[buffloc + 1] = 0;
+
+      if (mode == 0 && currentByte == '"'){
+        //Serial.println(buff);
+        if (viewMode == 2 && strncmp(buff,"\"replies\"",9) == 0){
           replies[i] = currentpost;
-          //Serial.println("postid=" + String(replies[i]) + " i=" + String(i));
           i++;
         }
+        if (strncmp(buff,"\"no\"",4) == 0){
+          mode = 1;          
+        }
+        buffloc = 0;
+      } else if (mode == 1 && currentByte == ':'){
+        mode = 2;
+        buffloc = -1;
+      } else if (mode == 2 && currentByte == ','){
+        buff[buffloc] = 0;
+        if (viewMode == 1) {
+          replies[i] = String(buff).toInt();
+          i++;
+        } else {
+          currentpost = String(buff).toInt();
+        }
+        mode = 0;
+        buffloc = 0;
       }
+
+      if (buffloc == 0){
+        buff[buffloc] = currentByte;
+        buff[buffloc + 1] = 0;
+      }
+
+      if (buffloc > 500)
+        buffloc = 0;
+      buffloc++;
+      chunklen--;
     }
-    client.readStringUntil(':');
-    if (viewMode == 1) {
-      replies[i] = client.readStringUntil(',').toInt();
-      //Serial.println("postid=" + String(replies[i]) + " i=" + String(i));
-      i++;
-    } else {
-      currentpost = client.readStringUntil(',').toInt();
-    }
+    client.readStringUntil('\n');
   }
   currentreply = 0;
-  maxreply = i - 2;
+  maxreply = i - 1;
 
   Serial.println("END");
-  if (maxreply == -2) {
+  if (maxreply == -1) {
     load_posts();
   }
 }
