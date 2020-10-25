@@ -526,7 +526,7 @@ bool draw_reply(String jsonsnippet) {
   tft.fillScreen(bgcolor); //moved this here or else pic won't be visible lol
   // Parse the tim element (timestamp) to load the image later on
   tim = "";
-  if (String(fnameb).length() > 0) {
+  if (String(extb).length() > 0) {
     fulltext.concat("File: <z>" + String(fnameb) + String(extb) + "</z> (" + String(imgw) + "x" + String(imgh) + ")<br>");
     bool readingtim = false;
     for (int x = 10; x < jsonsnippet.length(); x++) {
