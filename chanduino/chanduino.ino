@@ -86,8 +86,6 @@ const int buttonDelay = 350;
 String board = "";
 // Current thread
 int thread = 0;
-// Posts per page of current board
-int perPage = 15;
 // If a post is too long, split it into multiple "pages" (-1 = no split)
 int multiPage = -1;
 
@@ -129,6 +127,7 @@ int oldReplies[2001];
 // Chunked encoding can suck my [4chan pass]
 
 // Board list cache
+std::vector<String> boards_nm;
 std::vector<String> boards_ds;
 std::vector<bool> boards_ws;
 
@@ -289,47 +288,12 @@ int connectToa4cdn() {
  * Enters a board.
  */
 void load_board() {
-  Serial.print("\r\nConnecting to ");
-  Serial.println(host);
-
-  if (!connectToa4cdn()) {
-    load_board();
-    return;
+  if (boards_ws[currentreply]) {
+    bgcolor = 0xD6DE;
+  } else {
+    bgcolor = 0xF71A;
   }
-
-  Serial.print("GET /boards.json HTTP/1.1\r\n");
-  client.print("GET /boards.json HTTP/1.1\r\n");
-  client.print("Host: " + (String)host + "\r\n");
-  client.print("User-Agent: " + useragent + "\r\n");
-  client.print("Connection: keep-alive\r\n");
-  client.print("Keep-Alive: timeout=30, max=1000\r\n");
-  client.print("Cache-Control: no-cache\r\n\r\n");
-
-  client.readStringUntil('{');
-  Serial.println("START");
-  int i = 0;
-  while (client.available()) {
-    String line = client.readStringUntil('"');
-    if (line == "ws_board") {
-      if (client.readStringUntil(',') == ":1") {
-        bgcolor = 0xD6DE;
-      } else {
-        bgcolor = 0xF71A;
-      }
-    } else if (line == "per_page") {
-      client.readStringUntil(':');
-      perPage = client.readStringUntil(',').toInt();
-      Serial.print("Setting perPage to: ");
-      Serial.println(perPage);
-      if (i == currentreply) {
-        break;
-      }
-      i++;
-    } else if (line == "board") {
-      client.readStringUntil('"');
-      board = client.readStringUntil('"');
-    }
-  }
+  board = boards_nm[currentreply];
 }
 
 /**
@@ -353,6 +317,7 @@ void load_boards() {
   StaticJsonDocument<128> filter;
   filter["boards"][0]["ws_board"] = true;
   filter["boards"][0]["meta_description"] = true;
+  filter["boards"][0]["board"] = true;
 
   DeserializationError err = deserializeJson(jsonDoc, http.getStream(), DeserializationOption::Filter(filter));
   if (err) {
@@ -374,6 +339,7 @@ void load_boards() {
     desc.replace("is 4chan's imageboard dedicated to", "-");
     desc.replace("is 4chan's imageboard", "-");
     boards_ds.push_back(desc);
+    boards_nm.push_back(jsonDoc["boards"][i]["board"].as<String>());
     boards_ws.push_back(jsonDoc["boards"][i]["ws_board"].as<int>());
     if (desc.indexOf(CHANDUINO_DEFAULTBOARD) > 0)
       currentreply = i;
@@ -467,7 +433,8 @@ void load_reply() {
       chunklen--;
       if (mode == 4)
         continue;
-      buff[buffloc] = currentByte;
+      if (buffloc >= 0)
+        buff[buffloc] = currentByte;
       // Set string end byte to nullbyte just in case
       buff[buffloc + 1] = 0;
 
@@ -480,7 +447,8 @@ void load_reply() {
         mode = 2;
         buffloc = -1;
       } else if (mode == 2 && currentByte == ','){
-        buff[buffloc] = 0;
+        if (buffloc >= 0)
+          buff[buffloc] = 0;
         if (String(buff).toInt() == replies[currentreply]) {
           Serial.println("Found reply, loading...");
           mode = 3;
@@ -772,7 +740,8 @@ void load_posts() {
       while (!client.available()){}
       char currentByte = client.read();
       //Serial.print(currentByte);
-      buff[buffloc] = currentByte;
+      if (buffloc >= 0)
+        buff[buffloc] = currentByte;
       // Set string end byte to nullbyte just in case
       buff[buffloc + 1] = 0;
 
@@ -783,14 +752,15 @@ void load_posts() {
           i++;
         }
         if (strncmp(buff,"\"no\"",4) == 0){
-          mode = 1;          
+          mode = 1;
         }
         buffloc = 0;
       } else if (mode == 1 && currentByte == ':'){
         mode = 2;
         buffloc = -1;
       } else if (mode == 2 && currentByte == ','){
-        buff[buffloc] = 0;
+        if (buffloc >= 0)
+          buff[buffloc] = 0;
         if (viewMode == 1) {
           replies[i] = String(buff).toInt();
           i++;
