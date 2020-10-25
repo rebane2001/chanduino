@@ -132,7 +132,7 @@ std::vector<String> boards_ds;
 std::vector<bool> boards_ws;
 
 // For loading images
-uint8_t PicArray[15000] = {0};
+//uint8_t PicArray[15000] = {0};
 
 WiFiClientSecure client;
 
@@ -812,55 +812,80 @@ void draw_img(bool full) {
   client.print("Connection: keep-alive\r\n");
   client.print("Keep-Alive: timeout=30, max=1000\r\n");
   client.print("Cache-Control: no-cache\r\n\r\n");
-  int totalSize = 0;
 
-  /*
-    When calling draw_img after loading a huge thread,
-    the thread will still be in the client for some reason
-    even after attempting to flush it in connectToa4cdn()
-    so what this part here does is just reading the stream
-    until we reach a JPEG header and then we stop and move
-    on. Also we can't use client.available() here for some
-    reason so that sucks lol.
-  */
-  uint8_t jpeg_header[] = {0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46};
-  uint8_t jpeg_header_buff[8];
-  uint8_t index;
-  while (true) {
-    if (client.find("JFIF"))
+  int chunklen = 0;
+  int buffloc = 0;
+
+  while (1){
+    client.readStringUntil('\n');
+    if (client.readStringUntil(':') == "Content-Length"){
+      client.readStringUntil(' ');
+      chunklen = String(client.readStringUntil('\r')).toInt();
+      client.readStringUntil('\n');
       break;
-    if (!client.connected())
-      return;
-  }
-
-  uint8_t buff[1024];
-
-  // Start off with a JPEG header
-  memcpy(PicArray + totalSize, jpeg_header, 10);
-  totalSize = totalSize + 10;
-
-  // Keep loading the image until we have loaded it
-  while (client.available()) {
-    size_t size = client.available();
-    if(size) {
-
-      int c = client.readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
-      memcpy(PicArray + totalSize, buff, c);
-      totalSize = totalSize + c;
     }
   }
 
+  while (client.readStringUntil('\n') != "\r") {}
+  while (chunklen > 0){
+    while (!client.available()){}
+    chunklen--;
+    char currentByte = client.read();
+    if (buffloc >= 0)
+      buff[buffloc] = currentByte;
+    // Set string end byte to nullbyte just in case
+    buff[buffloc + 1] = 0;
+
+    if (buffloc > 32766)
+      buffloc = 0;
+
+    buffloc++;
+  }
+
+  /*
+  Chunked HTTP TROLL CODE
+  int buffloc = 0;
+  while (client.readStringUntil('\n') != "\r") {}
+  while (client.peek() != '0') {
+    // Get current chunk len
+    int chunklen = (int)strtol(client.readStringUntil('\r').c_str(), NULL, 16);
+    client.readStringUntil('\n');
+    Serial.println("CHUNK LEN: " + String(chunklen));
+    if (chunklen == 0){
+      Serial.println("Retrying...");
+      draw_img(full);
+      return;
+    }
+    while (chunklen > 0){
+      while (!client.available()){}
+      chunklen--;
+      char currentByte = client.read();
+      if (buffloc >= 0)
+        buff[buffloc] = currentByte;
+      // Set string end byte to nullbyte just in case
+      buff[buffloc + 1] = 0;
+
+      if (buffloc > 32766)
+        buffloc = 0;
+
+      buffloc++;
+    }
+    client.readStringUntil('\n');
+  }
+  client.readStringUntil('\n');
+  */
+
   // Just logging
-  Serial.println("TotalS:" + String(totalSize));
+  Serial.println("Image size:" + String(buffloc));
 
   Serial.print("First 10 Bytes: ");
   for (int ipt = 0; ipt < 11; ipt++) {
-    Serial.print(PicArray[ipt], HEX);
+    Serial.print(buff[ipt], HEX);
     Serial.print(",");
   }
   Serial.print("\nLast 10 Bytes : ");
   for (int ipt = 10; ipt >= 0; ipt--) {
-    Serial.print(PicArray[totalSize - ipt], HEX);
+    Serial.print(buff[buffloc - ipt], HEX);
     Serial.print(",");
   }
   Serial.println("");
@@ -868,9 +893,9 @@ void draw_img(bool full) {
   // if we are displaying as a thumbnail then show it 2x smaller
   TJpgDec.setJpgScale(full ? 1 : 2); //1, 2, 4 or 8
   uint16_t w = 0, h = 0;
-  TJpgDec.getJpgSize(&w, &h, PicArray, sizeof(PicArray));
+  TJpgDec.getJpgSize(&w, &h, (const uint8_t*)buff, sizeof(buff));
   // show the pic in the middle or the edge depending on if it is a thumbnail
-  TJpgDec.drawJpg(full ? 120 - (w / 2) : 6, full ? 68 - (h / 2) : 6, PicArray, sizeof(PicArray));
+  TJpgDec.drawJpg(full ? 120 - (w / 2) : 6, full ? 68 - (h / 2) : 6, (const uint8_t*)buff, sizeof(buff));
 }
 
 // Saves posts so we can restore the position later
