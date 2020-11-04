@@ -1,0 +1,286 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<style>
+  @font-face {
+    font-family: "monogram";
+    src: url("monogram.ttf") format("truetype");
+  }
+  #inputs { background-color: #FFF; }
+  #themecode { font-family: "monogram"; }
+  .sample-image { 
+    height: 62px;
+    float: left;
+    margin: 2px;
+  }
+  .chanduino p {
+    margin: 2px;
+  }
+  .chanduino {
+    font-family: "monogram";
+    width: 240px;
+    height: 135px;
+    line-height: 10px;
+    display:inline-block;
+  }
+  .boardselect {
+  }
+  .board-s {
+  }
+  .board-p {
+  }
+  .board-ws {
+  }
+  .board-nsfw {
+  }
+  .post {
+  }
+  .post-ws {
+  }
+  .post-nsfw {
+  }
+  .post-title {
+  }
+  .post-name {
+  }
+  .post-file {
+  }
+  .post-you {
+  }
+  .post-green {
+  }
+  .post-spoiler {
+  }
+  .post-threadwatcher {
+  }
+  .post-threadwatcher-active {
+  }
+
+</style>
+<title>Chanduino theme generator</title>
+<meta charset="UTF-8">
+<meta name="description" content="Chanduino theme generator">
+</head>
+<body>
+  <p><b>Chanduino theme generator</b><br>
+  Note: colors are not accurate</p>
+  <div class="chanduino boardselect">
+    <p><span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br>
+    <span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br>
+    <span class="board-nsfw">'/b/ - Bad' - Board for NSFW discussion</span><br>
+    <span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br>
+    <span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br>
+    <span class="board-nsfw">'/b/ - Bad' - Board for NSFW discussion</span><br>
+    <span class="board-nsfw">'/b/ - Bad' - Board for NSFW discussion</span><br>
+    <span class="board-ws board-s">'/sel/ - Selected' - Selected board</span><br>
+    <span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br>
+    <span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br>
+    <span class="board-p">'/p/ - Pony' - Board for ponies</span><br>
+    <span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br>
+    <span class="board-ws">'/s/ - Safe' - Board for SFW discussion</span><br></p>
+  </div>
+  <div class="chanduino post post-ws">
+    <p><img src="sample.jpg" class="sample-image" /><span class="post-title">Chanduino sample SFW post</span> <span class="post-name">An<br>
+    onymous</span> 10/10/10(Sun)13:37:0<br>
+    0 No.12345678<br>
+    File: <span class="post-file">chanduino.jpg</span> (62x62)<br>
+    <span class="post-you">>>87654321</span><br>
+    Lorem ipsum dolor sit amet,<br>
+    consectetur adipiscing elit,<br>
+    sed do eiusmod tempor incididunt<br>
+    <span class="post-green">>mfw lorem ipsum</span><br>
+    <span class="post-spoiler">spoilered text</span><br>
+    <br>
+    <span class="post-threadwatcher">3 new posts!</span><br>
+    <span class="post-threadwatcher-active">3 new posts!</span><br></p>
+  </div>
+  <div class="chanduino post post-nsfw">
+    <p><img src="sample.jpg" class="sample-image" /><span class="post-title">Chanduino sample NSFW post</span> <span class="post-name">A<br>
+    nonymous</span> 10/10/10(Sun)13:37:<br>
+    00 No.12345678<br>
+    File: <span class="post-file">chanduino.jpg</span> (62x62)<br>
+    <span class="post-you">>>87654321</span><br>
+    Lorem ipsum dolor sit amet,<br>
+    consectetur adipiscing elit,<br>
+    sed do eiusmod tempor incididunt<br>
+    <span class="post-green">>mfw lorem ipsum</span><br>
+    <span class="post-spoiler">spoilered text</span><br>
+    <br>
+    <span class="post-threadwatcher">3 new posts!</span><br>
+    <span class="post-threadwatcher-active">3 new posts!</span><br></p>
+  </div><br>
+  <div id="themesettings"></div>
+  <textarea id="themecode" cols="80" rows="20" onChange="loadTheme()">
+#define CHANDUINO_THEME_BOARDSELECT_BACKGROUND 0x2104
+#define CHANDUINO_THEME_BOARDSELECT_SELECTION 0x0000
+#define CHANDUINO_THEME_BOARDSELECT_P 0xF81F
+#define CHANDUINO_THEME_BOARDSELECT_WS 0x554A
+#define CHANDUINO_THEME_BOARDSELECT_NSFW 0xDAAA
+#define CHANDUINO_THEME_BOARD_BACKGROUND_WS 0xD6DE
+#define CHANDUINO_THEME_BOARD_BACKGROUND_NSFW 0xF71A
+#define CHANDUINO_THEME_POST_TITLE 0x086B
+#define CHANDUINO_THEME_POST_NAME 0x13A8
+#define CHANDUINO_THEME_POST_FILE 0x31AB
+#define CHANDUINO_THEME_POST_TEXT 0x0000
+#define CHANDUINO_THEME_POST_YOU 0xD800
+#define CHANDUINO_THEME_POST_GREEN 0x7CC4
+#define CHANDUINO_THEME_POST_SPOILER_FG 0xFFFF
+#define CHANDUINO_THEME_POST_SPOILER_BG 0x0000
+#define CHANDUINO_THEME_THREADWATCHER_PRIMARY 0xDAAA
+#define CHANDUINO_THEME_THREADWATCHER_SECONDARY 0x0000
+#define CHANDUINO_THEME_LOADING 0xD800</textarea><br>
+<button onclick="download('theme.h',themecode.value)" type="button">Save theme</button><br>
+Load theme: <input id="loadthemefile" type="file">
+  <div id="inputs">
+    RGB888 HEX: <input id="rgb888input"><br>
+    RGB565 HEX: <input id="rgb565input"><br>
+ </div>
+<script>
+  theme = {
+    "CHANDUINO_THEME_BOARDSELECT_BACKGROUND": 0,
+    "CHANDUINO_THEME_BOARDSELECT_SELECTION": 0,
+    "CHANDUINO_THEME_BOARDSELECT_P": 0,
+    "CHANDUINO_THEME_BOARDSELECT_WS": 0,
+    "CHANDUINO_THEME_BOARDSELECT_NSFW": 0,
+    "CHANDUINO_THEME_BOARD_BACKGROUND_WS": 0,
+    "CHANDUINO_THEME_BOARD_BACKGROUND_NSFW": 0,
+    "CHANDUINO_THEME_POST_TITLE": 0,
+    "CHANDUINO_THEME_POST_NAME": 0,
+    "CHANDUINO_THEME_POST_FILE": 0,
+    "CHANDUINO_THEME_POST_TEXT": 0,
+    "CHANDUINO_THEME_POST_YOU": 0,
+    "CHANDUINO_THEME_POST_GREEN": 0,
+    "CHANDUINO_THEME_POST_SPOILER_FG": 0,
+    "CHANDUINO_THEME_POST_SPOILER_BG": 0,
+    "CHANDUINO_THEME_THREADWATCHER_PRIMARY": 0,
+    "CHANDUINO_THEME_THREADWATCHER_SECONDARY": 0,
+    "CHANDUINO_THEME_LOADING": 0
+  }
+
+  function download(filename, text) { //Downloads a plaintext file
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  }
+
+  const sheet = new CSSStyleSheet();
+  document.adoptedStyleSheets = [sheet];
+
+  let RGB888to565 = (RGB888) => (((RGB888&0xF80000)>>8) + ((RGB888&0xFC00)>>5) + ((RGB888&0xF8)>>3));
+  let RGB565to888 = (RGB565) => (((RGB565&0xF800)<<8) + ((RGB565&0x7E0)<<5) + ((RGB565&0x1F)<<3));
+  rgb888input.addEventListener('input', (event) => {
+    let rgb888 = rgb888input.value.replace(/[^A-F0-9 ]/gi, "");
+    rgb565input.value = RGB888to565(parseInt(rgb888,16)).toString(16).padStart(4, '0');
+    document.body.style.background = "#" + rgb888.padStart(6, '0');
+  });
+  rgb565input.addEventListener('input', (event) => {
+    let rgb565 = rgb565input.value.replace(/[^A-F0-9 ]/gi, "");
+    rgb888input.value = RGB565to888(parseInt(rgb565,16)).toString(16).padStart(6, '0');
+    document.body.style.background = "#" + rgb888input.value.padStart(6, '0');
+  });
+
+  let toCSS = (color) => "#" + RGB565to888(color).toString(16).padStart(6, '0');
+  function updateTheme(){
+    sheet.replaceSync(`
+      .chanduino {
+      }
+      .boardselect {
+        background-color: ${toCSS(theme["CHANDUINO_THEME_BOARDSELECT_BACKGROUND"])}
+      }
+      .board-s {
+        background-color: ${toCSS(theme["CHANDUINO_THEME_BOARDSELECT_SELECTION"])};
+        display: inline-block
+      }
+      .board-p {
+        color: ${toCSS(theme["CHANDUINO_THEME_BOARDSELECT_P"])}
+      }
+      .board-ws {
+        color: ${toCSS(theme["CHANDUINO_THEME_BOARDSELECT_WS"])}
+      }
+      .board-nsfw {
+        color: ${toCSS(theme["CHANDUINO_THEME_BOARDSELECT_NSFW"])}
+      }
+      .post {
+        color: ${toCSS(theme["CHANDUINO_THEME_POST_TEXT"])}
+      }
+      .post-ws {
+        background-color: ${toCSS(theme["CHANDUINO_THEME_BOARD_BACKGROUND_WS"])}
+      }
+      .post-nsfw {
+        background-color: ${toCSS(theme["CHANDUINO_THEME_BOARD_BACKGROUND_NSFW"])}
+      }
+      .post-title {
+        color: ${toCSS(theme["CHANDUINO_THEME_POST_TITLE"])}
+      }
+      .post-name {
+        color: ${toCSS(theme["CHANDUINO_THEME_POST_NAME"])}
+      }
+      .post-file {
+        color: ${toCSS(theme["CHANDUINO_THEME_POST_FILE"])}
+      }
+      .post-you {
+        color: ${toCSS(theme["CHANDUINO_THEME_POST_YOU"])}
+      }
+      .post-green {
+        color: ${toCSS(theme["CHANDUINO_THEME_POST_GREEN"])}
+      }
+      .post-spoiler {
+        color: ${toCSS(theme["CHANDUINO_THEME_POST_SPOILER_FG"])};
+        background-color: ${toCSS(theme["CHANDUINO_THEME_POST_SPOILER_BG"])};
+        display: inline-block
+      }
+      .post-threadwatcher {
+        color: ${toCSS(theme["CHANDUINO_THEME_THREADWATCHER_PRIMARY"])};
+      }
+      .post-threadwatcher-active {
+        color: ${toCSS(theme["CHANDUINO_THEME_THREADWATCHER_SECONDARY"])};
+        background-color: ${toCSS(theme["CHANDUINO_THEME_THREADWATCHER_PRIMARY"])};
+        display: inline-block
+      }
+    `);
+  }
+  function updateColors(){
+    themecode.value = "";
+    for (let setting in theme) {
+      let color = RGB888to565(parseInt(document.getElementById(`COLORPICKER_${setting}`).value.replace("#",""),16)).toString(16).padStart(4, '0');
+      themecode.value += `#define ${setting} 0x${color.toUpperCase()}\n`;
+    }
+    loadTheme();
+  }
+  function loadTheme(){
+    let lines = themecode.value.split('\n');
+    for(let i = 0;i < lines.length;i++){
+      let line = lines[i].split(" ");
+      if (line.length == 1)
+        continue;
+      theme[line[1]] = parseInt(line[2],16);
+      document.getElementById(`COLORPICKER_${line[1]}`).value = toCSS(theme[line[1]]);
+    }
+    updateTheme();
+  }
+  function createInputs(){
+    for (let setting in theme) {
+      themesettings.innerHTML += `
+      <input type="color" id="COLORPICKER_${setting}" value="#ff0000" onChange="updateColors()">${setting}<br>
+      `;
+    }
+  }
+  createInputs();
+  loadTheme();
+  loadthemefile.addEventListener("change", () => {
+    if (loadthemefile.files && loadthemefile.files[0]) {
+      var FR = new FileReader();
+      FR.addEventListener("load", async function(e) {
+        themecode.value = atob(e.target.result.split(",")[1]);
+        loadTheme();
+      });
+      FR.readAsDataURL(loadthemefile.files[0]);
+    }
+  });
+</script>
+</body>
