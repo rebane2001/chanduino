@@ -372,6 +372,11 @@ void show_boards() {
   if (boards_ws.size() == 0)
     load_boards();
 
+  if (board != ""){
+    currentreply = std::find(boards_nm.begin(), boards_nm.end(), board) - boards_nm.begin();
+    board = "";
+  }
+
   int drawn = 0;
   int i = 0;
   String desc = "";
