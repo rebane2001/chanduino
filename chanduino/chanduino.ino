@@ -12,6 +12,41 @@
 
 #include <TJpg_Decoder.h>
 
+/**
+ * SETTINGS
+ */
+// Set ENABLED to 1 to turn backlight off after TIME seconds of inactivity (no new posts and no button presses)
+#define CHANDUINO_SCREENSAVER_ENABLED 1
+#define CHANDUINO_SCREENSAVER_TIME 45
+// Set to 1 to enable threadwatcher
+// Set ENABLED to 1 to watch thread every TIME seconds after last buttonpress (DO NOT set under 10, recommended values are 30-120)
+#define CHANDUINO_THREADWATCHER_ENABLED 1
+#define CHANDUINO_THREADWATCHER_TIME 60
+// Change this to your favorite board to have it auto-selected
+#define CHANDUINO_DEFAULTBOARD "/replaceme/"
+
+/**
+ * THEME
+ */
+#define CHANDUINO_THEME_BOARDSELECT_BACKGROUND 0x2104
+#define CHANDUINO_THEME_BOARDSELECT_SELECTION 0x0000
+#define CHANDUINO_THEME_BOARDSELECT_P 0xF81F
+#define CHANDUINO_THEME_BOARDSELECT_WS 0x554A
+#define CHANDUINO_THEME_BOARDSELECT_NSFW 0xDAAA
+#define CHANDUINO_THEME_BOARD_BACKGROUND_WS 0xD6DE
+#define CHANDUINO_THEME_BOARD_BACKGROUND_NSFW 0xF71A
+#define CHANDUINO_THEME_POST_TITLE 0x086B
+#define CHANDUINO_THEME_POST_NAME 0x13A8
+#define CHANDUINO_THEME_POST_FILE 0x31AB
+#define CHANDUINO_THEME_POST_TEXT 0x0000
+#define CHANDUINO_THEME_POST_YOU 0xD800
+#define CHANDUINO_THEME_POST_GREEN 0x7CC4
+#define CHANDUINO_THEME_POST_SPOILER_FG 0xFFFF
+#define CHANDUINO_THEME_POST_SPOILER_BG 0x0000
+#define CHANDUINO_THEME_THREADWATCHER_PRIMARY 0xDAAA
+#define CHANDUINO_THEME_THREADWATCHER_SECONDARY 0x0000
+#define CHANDUINO_THEME_LOADING 0xD800
+
 #ifndef TFT_DISPOFF
 #define TFT_DISPOFF 0x28
 #endif
@@ -31,16 +66,6 @@
 #define ADC_PIN         34
 #define BUTTON_1        35
 #define BUTTON_2        0
-
-// Set ENABLED to 1 to turn backlight off after TIME seconds of inactivity (no new posts and no button presses)
-#define CHANDUINO_SCREENSAVER_ENABLED 1
-#define CHANDUINO_SCREENSAVER_TIME 45
-// Set to 1 to enable threadwatcher
-// Set ENABLED to 1 to watch thread every TIME seconds after last buttonpress (DO NOT set under 10, recommended values are 30-120)
-#define CHANDUINO_THREADWATCHER_ENABLED 1
-#define CHANDUINO_THREADWATCHER_TIME 60
-// Change this to your favorite board to have it auto-selected
-#define CHANDUINO_DEFAULTBOARD "/replaceme/"
 
 TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom library
 Button2 btn1(BUTTON_1);
@@ -103,7 +128,7 @@ int maxposts = 0;
 String tim = "";
 
 // Current board settings
-int bgcolor = 0xD6DE; //0xF71A
+int bgcolor = CHANDUINO_THEME_BOARDSELECT_BACKGROUND;
 
 /**
  * viewMode:
@@ -173,7 +198,7 @@ void button_init() {
             load_reply();
           } else if (viewMode == 2) {
             viewMode = 3;
-            bgcolor = 0x2104; //light 0x2104 dark 0x18C3 green 0x554A red 0xDAAA
+            bgcolor = CHANDUINO_THEME_BOARDSELECT_BACKGROUND;
             currentreply = 0;
             maxreply = -2;
             show_boards();
@@ -190,12 +215,7 @@ void button_init() {
       wifiMode = 0;
       WiFi.mode(WIFI_STA);
       if (connect_wifi()) {
-        if (viewMode == 3) {
-          show_boards();
-        } else {
-          tft.setTextColor(0x0000, bgcolor);
-          tft.drawString("Connection restored!", tft.width() / 2, tft.height() / 2);
-        }
+        draw_connection_restored();
         return;
       }
     }
@@ -251,12 +271,7 @@ void button_init() {
       wifiMode = 0;
       WiFi.mode(WIFI_STA);
       if (connect_wifi()) {
-        if (viewMode == 3) {
-          show_boards();
-        } else {
-          tft.setTextColor(0x0000, bgcolor);
-          tft.drawString("Connection restored!", tft.width() / 2, tft.height() / 2);
-        }
+        draw_connection_restored();
         return;
       }
     }
@@ -289,9 +304,9 @@ int connectToa4cdn() {
  */
 void load_board() {
   if (boards_ws[currentreply]) {
-    bgcolor = 0xD6DE;
+    bgcolor = CHANDUINO_THEME_BOARD_BACKGROUND_WS;
   } else {
-    bgcolor = 0xF71A;
+    bgcolor = CHANDUINO_THEME_BOARD_BACKGROUND_NSFW;
   }
   board = boards_nm[currentreply];
 }
@@ -364,9 +379,9 @@ void show_boards() {
 
   for (i = 0; i < boards_ws.size(); i++) {
     if (i > currentreply - 6) {
-      if (drawn < 12) { //light 0x2104 dark 0x18C3 green 0x554A red 0xDAAA
+      if (drawn < 12) {
         tft.setTextDatum(TL_DATUM);
-        tft.setTextColor(boards_ws[i] ? ((boards_ds[i].indexOf("Ponies") > 0) ? 0xF81F : 0x554A) : 0xDAAA, (i == currentreply) ? 0x0000 : bgcolor);
+        tft.setTextColor(boards_ws[i] ? ((boards_ds[i].indexOf("Ponies") > 0) ? CHANDUINO_THEME_BOARDSELECT_P : CHANDUINO_THEME_BOARDSELECT_WS) : CHANDUINO_THEME_BOARDSELECT_NSFW, (i == currentreply) ? CHANDUINO_THEME_BOARDSELECT_SELECTION : bgcolor);
         tft.drawString(boards_ds[i], 6, 6 + drawn * 10);
         drawn++;
       } else if(maxreply != -2) {
@@ -552,9 +567,7 @@ bool draw_reply(String jsonsnippet) {
   int sy = 6;
   int txtmode = 0;
   String entity = "";
-  //4chan blue bg - 0xEF9F
-  //4chan blue post bg - bgcolor
-  tft.setTextColor(TFT_BLACK, bgcolor);
+  tft.setTextColor(CHANDUINO_THEME_POST_TITLE, bgcolor);
   tft.setTextSize(1);
   tft.setTextDatum(TL_DATUM);
   int currentMultiPage = 0;
@@ -582,20 +595,20 @@ bool draw_reply(String jsonsnippet) {
       txtmode = 1;
       cchar = String(fulltext.charAt(x + 1));
       if (cchar == "a") {
-        tft.setTextColor(0xD800, bgcolor);
+        tft.setTextColor(CHANDUINO_THEME_POST_YOU, bgcolor);
       } else if (cchar == "b") {
         sx = 9;
         sy += 10;
       } else if (cchar == "n") {
-        tft.setTextColor(0x13A8, bgcolor);
+        tft.setTextColor(CHANDUINO_THEME_POST_NAME, bgcolor);
       } else if (cchar == "s") {
-        tft.setTextColor(0x7CC4, bgcolor);
+        tft.setTextColor(CHANDUINO_THEME_POST_GREEN, bgcolor);
       } else if (cchar == "z") {
-        tft.setTextColor(0x31AB, bgcolor);
+        tft.setTextColor(CHANDUINO_THEME_POST_FILE, bgcolor);
       } else if (cchar == "x") {
-        tft.setTextColor(0xFFFF, 0x0000);
+        tft.setTextColor(CHANDUINO_THEME_POST_SPOILER_FG, CHANDUINO_THEME_POST_SPOILER_BG);
       } else if (cchar == "/") {
-        tft.setTextColor(TFT_BLACK, bgcolor);
+        tft.setTextColor(CHANDUINO_THEME_POST_TEXT, bgcolor);
       }
 
     }
@@ -641,9 +654,9 @@ bool draw_reply(String jsonsnippet) {
   if (seenAllNewPosts){
     lastReadReply = replies[maxreply];
   } else {
-    tft.setTextColor(0xDAAA, bgcolor);
+    tft.setTextColor(CHANDUINO_THEME_THREADWATCHER_PRIMARY, bgcolor);
     if (replies[currentreply] == lastReadReply)
-      tft.setTextColor(TFT_BLACK, 0xDAAA);
+      tft.setTextColor(CHANDUINO_THEME_THREADWATCHER_SECONDARY, CHANDUINO_THEME_THREADWATCHER_PRIMARY);
     tft.setTextDatum(BL_DATUM);
     if (currentreply == maxreply){
       seenAllNewPosts = true;
@@ -675,12 +688,24 @@ void draw_reply_number() {
 }
 
 /**
+ * Draws connection restored message or show boards for when WiFi is restored.
+ */
+void draw_connection_restored() {
+  if (viewMode == 3) {
+    show_boards();
+  } else {
+    tft.setTextColor(0x0000, bgcolor);
+    tft.drawString("Connection restored!", tft.width() / 2, tft.height() / 2);
+  }
+}
+
+/**
  * Draws loading text.
  */
 void draw_loading_text() {
   tft.setTextSize(1);
   tft.setTextDatum(MC_DATUM);
-  tft.setTextColor(0xD800, bgcolor);
+  tft.setTextColor(CHANDUINO_THEME_LOADING, bgcolor);
   tft.drawString("Loading...", tft.width() / 2, tft.height() / 2);
 }
 
@@ -1023,7 +1048,7 @@ void setup() {
   tft.setRotation(1);
   tft.setCursor(0, 0);
   tft.setTextSize(1);
-  tft.fillScreen(TFT_WHITE);
+  tft.fillScreen(0xFFFF);
   tft.setTextDatum(MC_DATUM);
 
   if (TFT_BL > 0) { // TFT_BL has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
@@ -1039,7 +1064,6 @@ void setup() {
   button_init();
 
   viewMode = 3;
-  bgcolor = 0x2104; //light 0x2104 dark 0x18C3 green 0x554A red 0xDAAA
   currentreply = 0;
   maxreply = -2;
 
@@ -1095,12 +1119,7 @@ void wifiLoop() {
               wifiMode = 0;
               WiFi.mode(WIFI_STA);
               if (connect_wifi()) {
-                if (viewMode == 3) {
-                  show_boards();
-                } else {
-                  tft.setTextColor(0x0000, bgcolor);
-                  tft.drawString("Connection restored!", tft.width() / 2, tft.height() / 2);
-                }
+                draw_connection_restored();
                 return;
               }
             }
