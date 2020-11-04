@@ -167,9 +167,12 @@ WiFiClientSecure client;
  * Handles buttonpresses and navigation.
  */
 void button_init() {
+  // When button down, activate backlight
+  btn1.setPressedHandler([](Button2 & b) { updateLastTimes(); });
+  btn2.setPressedHandler([](Button2 & b) { updateLastTimes(); });
+
   // UP button
   btn1.setReleasedHandler([](Button2 & b) {
-    updateLastTimes();
     if (wifiMode == 0) {
       if (connect_wifi()) {
         unsigned int time = b.wasPressedFor();
@@ -224,7 +227,6 @@ void button_init() {
 
   // DOWN button
   btn2.setReleasedHandler([](Button2 & b) {
-    updateLastTimes();
     if (wifiMode == 0) {
       if (connect_wifi()) {
         unsigned int time = b.wasPressedFor();
