@@ -1,0 +1,31 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<style>
+  #inputs { background-color: #FFF; }
+</style>
+<title>RGB565 converter</title>
+<meta charset="UTF-8">
+<meta name="description" content="RGB565 converter">
+</head>
+<body>
+  <div id="inputs">
+    RGB888 HEX: <input id="rgb888input"><br>
+    RGB565 HEX: <input id="rgb565input"><br>
+ </div>
+<script>
+  let RGB888to565 = (RGB888) => (((RGB888&0xF80000)>>8) + ((RGB888&0xFC00)>>5) + ((RGB888&0xF8)>>3));
+  let RGB565to888 = (RGB565) => (((RGB565&0xF800)<<8) + ((RGB565&0x7E0)<<5) + ((RGB565&0x1F)<<3));
+  rgb888input.addEventListener('input', (event) => {
+    let rgb888 = rgb888input.value.replace(/[^A-F0-9 ]/gi, "");
+    rgb565input.value = RGB888to565(parseInt(rgb888,16)).toString(16).padStart(4, '0');
+    document.body.style.background = "#" + rgb888.padStart(6, '0');
+  });
+  rgb565input.addEventListener('input', (event) => {
+    let rgb565 = rgb565input.value.replace(/[^A-F0-9 ]/gi, "");
+    rgb888input.value = RGB565to888(parseInt(rgb565,16)).toString(16).padStart(6, '0');
+    document.body.style.background = "#" + rgb888input.value.padStart(6, '0');
+  });
+</script>
+</body>
