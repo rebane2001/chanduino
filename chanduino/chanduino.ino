@@ -687,7 +687,7 @@ bool draw_reply(String jsonsnippet) {
  * Draws current thread/reply number in the corner.
  */
 void draw_reply_number() {
-  tft.setTextColor(TFT_BLACK, bgcolor);
+  tft.setTextColor(CHANDUINO_THEME_POST_TEXT, bgcolor);
   tft.setTextDatum(BR_DATUM);
   tft.drawString(String(currentreply + 1) + "/" + String(maxreply + 1), 231, 125);
 }
