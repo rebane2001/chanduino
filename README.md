@@ -20,10 +20,6 @@ Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display
 
 ![UI demo](yotsuba.jpg?raw=true)
 
-# Flashing and Setup
-
-Please see [SETUP.md](SETUP.md) for instructions on how to flash the code and reset the board.
-
 # Usage
 On first launch or if no WiFi is found, Chanduino will create a WiFi hotspot which you can use to set up a WiFi connection for it. The SSID/password will be saved into flash and Chanduino will boot straight into the main menu next time.
 
@@ -43,6 +39,10 @@ You can change some of the settings through editing `#define`s in `chanduino.ino
    - Change how often threadwatcher should check for new posts (seconds)
  - CHANDUINO_DEFAULTBOARD "/replaceme/"
    - Auto-select a board of your choice on startup
+   
+# Flashing and Setup
+
+Please see [SETUP.md](SETUP.md) for instructions on how to flash the code and reset the board.
 
 # Themes
 You can edit the colors used in the `THEME` section of `chanduino.ino`, similar to how you change the other settings. 
