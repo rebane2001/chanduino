@@ -44,7 +44,7 @@ In order to flash chanduino to your ESP32 TTGO T-Display board, you will need a 
 
 Once that is finished, your board should reboot and Chanduino should be installed. Follow the instructions on the screen to use!
 
-For some customization, be sure to check the [README](README.md) for options that can be changed. These options are located in the chanduino.ino file, and the code must be re-uploaded to apply changes.
+For some customization, be sure to check the [README](README.md) for themes and configuration options that can be changed. These options are located in the chanduino.ino file, and the code must be re-uploaded to apply changes.
 
 ## Resetting the board
 
