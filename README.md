@@ -39,6 +39,10 @@ You can change some of the settings through editing `#define`s in `chanduino.ino
    - Change how often threadwatcher should check for new posts (seconds)
  - CHANDUINO_DEFAULTBOARD "/replaceme/"
    - Auto-select a board of your choice on startup
+   
+# Flashing and Setup
+
+Please see [SETUP.md](SETUP.md) for instructions on how to flash the code and reset the board.
 
 # Themes
 You can edit the colors used in the `THEME` section of `chanduino.ino`, similar to how you change the other settings. 
