@@ -258,6 +258,8 @@ Load theme: <input id="loadthemefile" type="file">
       let line = lines[i].split(" ");
       if (line.length == 1)
         continue;
+      if (lines[i].startsWith("//"))
+        continue;
       theme[line[1]] = parseInt(line[2],16);
       document.getElementById(`COLORPICKER_${line[1]}`).value = toCSS(theme[line[1]]);
     }
