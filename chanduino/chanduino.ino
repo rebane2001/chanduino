@@ -1055,7 +1055,7 @@ void setup() {
   tft.setRotation(1);
   tft.setCursor(0, 0);
   tft.setTextSize(1);
-  tft.fillScreen(0xFFFF);
+  tft.fillScreen(CHANDUINO_THEME_BOARD_BACKGROUND_WS);
   tft.setTextDatum(MC_DATUM);
 
   if (TFT_BL > 0) { // TFT_BL has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
@@ -1064,7 +1064,7 @@ void setup() {
   }
 
   tft.setSwapBytes(true);
-  tft.setTextColor(0x0000, 0xFFFF);
+  tft.setTextColor(CHANDUINO_THEME_POST_TEXT, CHANDUINO_THEME_BOARD_BACKGROUND_WS);
   tft.drawString("Connecting...", tft.width() / 2, 8 * 7);
 
   //Initialize buttons
@@ -1230,7 +1230,7 @@ bool connect_wifi() {
       server.begin();
       Serial.print("AP IP address: ");
       Serial.println(IP);
-      tft.setTextColor(0x0000, 0xFFFF);
+      tft.setTextColor(CHANDUINO_THEME_POST_TEXT, CHANDUINO_THEME_BOARD_BACKGROUND_WS);
       tft.setTextDatum(MC_DATUM);
       tft.drawString("No wifi detected!", tft.width() / 2, 8 * 2);
       tft.drawString("Press any button to retry", tft.width() / 2, 8 * 3);
