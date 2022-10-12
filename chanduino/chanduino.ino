@@ -24,6 +24,8 @@
 #define CHANDUINO_THREADWATCHER_TIME 60
 // Change this to your favorite board to have it auto-selected
 #define CHANDUINO_DEFAULTBOARD "/replaceme/"
+// Set to 1 to hide progress bar
+#define CHANDUINO_HIDE_PROGRESS_BAR 0
 
 /**
  * THEME
@@ -750,6 +752,7 @@ void draw_loading_text() {
  * Draws progress bar.
  */
 void draw_progress_bar(int progress, int total) {
+  if (CHANDUINO_HIDE_PROGRESS_BAR) return;
   if (total == -1) {
     tft.drawFastHLine(0, tft.height() - 1, tft.width(), bgcolor);
   }
