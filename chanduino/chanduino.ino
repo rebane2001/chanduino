@@ -127,6 +127,10 @@ int posts[2001];
 int savedpost = 0;
 int maxposts = 0;
 
+// For loading progress bar
+int boardPostCount = 0;
+int postReplyCount = 0;
+
 String tim = "";
 
 // Current board settings
@@ -157,6 +161,7 @@ int oldReplies[2001];
 std::vector<String> boards_nm;
 std::vector<String> boards_ds;
 std::vector<bool> boards_ws;
+std::vector<int> boards_ct;
 
 // For loading images
 //uint8_t PicArray[15000] = {0};
@@ -313,6 +318,7 @@ void load_board() {
     bgcolor = CHANDUINO_THEME_BOARD_BACKGROUND_NSFW;
   }
   board = boards_nm[currentreply];
+  boardPostCount = boards_ct[currentreply];
 }
 
 /**
@@ -337,6 +343,8 @@ void load_boards() {
   filter["boards"][0]["ws_board"] = true;
   filter["boards"][0]["meta_description"] = true;
   filter["boards"][0]["board"] = true;
+  filter["boards"][0]["per_page"] = true;
+  filter["boards"][0]["pages"] = true;
 
   DeserializationError err = deserializeJson(jsonDoc, http.getStream(), DeserializationOption::Filter(filter));
   if (err) {
@@ -360,6 +368,8 @@ void load_boards() {
     boards_ds.push_back(desc);
     boards_nm.push_back(jsonDoc["boards"][i]["board"].as<String>());
     boards_ws.push_back(jsonDoc["boards"][i]["ws_board"].as<int>());
+    int total_posts = jsonDoc["boards"][i]["per_page"].as<int>() * jsonDoc["boards"][i]["pages"].as<int>();
+    boards_ct.push_back(total_posts);
     if (desc.indexOf(CHANDUINO_DEFAULTBOARD) > 0)
       currentreply = i;
   }
@@ -437,6 +447,7 @@ void load_reply() {
   // 4 - searching for the meaning of life
   int mode = 0;
   int buffloc = 0;
+  int i = 0;
 
   bool foundPost = false;
 
@@ -465,6 +476,8 @@ void load_reply() {
       if (mode == 0 && currentByte == '"'){
         if (strncmp(buff,"\"no\"",4) == 0){
           mode = 1;
+          draw_progress_bar(i, currentreply);
+          i++;
         }
         buffloc = 0;
       } else if (mode == 1 && currentByte == ':'){
@@ -542,6 +555,11 @@ bool draw_reply(String jsonsnippet) {
   const int imgh = reply["h"];
   int tnw = reply["tn_w"];
   int tnh = reply["tn_h"];
+
+  if (viewMode == 2) {
+    postReplyCount = reply["replies"];
+  }
+  
   String fulltext = "";
   if (String(subb).length() > 0) {
     fulltext.concat(String(subb) + " ");
@@ -719,6 +737,19 @@ void draw_loading_text() {
 }
 
 /**
+ * Draws progress bar.
+ */
+void draw_progress_bar(int progress, int total) {
+  if (total == 0) return;
+  int startPoint = (tft.width() * progress)/total;
+  int endPoint = (tft.width() * (progress + 1))/total;
+  if (startPoint > tft.width()) return;
+  if (startPoint == endPoint) return;
+  // tft.fillRect(startPoint, 0, endPoint - startPoint, 16, CHANDUINO_THEME_LOADING);
+  tft.drawFastHLine(startPoint, tft.height() - 1, endPoint - startPoint, CHANDUINO_THEME_LOADING);
+}
+
+/**
  * Loads either all threads on a board or all replies on a thread.
  */
 void load_posts() {
@@ -783,6 +814,7 @@ void load_posts() {
         //Serial.println(buff);
         if (viewMode == 2 && strncmp(buff,"\"replies\"",9) == 0){
           replies[i] = currentpost;
+          draw_progress_bar(i, boardPostCount);
           i++;
         }
         if (strncmp(buff,"\"no\"",4) == 0){
@@ -797,6 +829,7 @@ void load_posts() {
           buff[buffloc] = 0;
         if (viewMode == 1) {
           replies[i] = String(buff).toInt();
+          draw_progress_bar(i, postReplyCount);
           i++;
         } else {
           currentpost = String(buff).toInt();
