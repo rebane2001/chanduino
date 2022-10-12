@@ -450,6 +450,7 @@ void load_reply() {
   int i = 0;
 
   bool foundPost = false;
+  bool loadImage = false;
 
   while (client.readStringUntil('\n') != "\r") {}
   while (client.peek() != '0') {
@@ -466,8 +467,13 @@ void load_reply() {
       while (!client.available()){}
       char currentByte = client.read();
       chunklen--;
-      if (mode == 4)
+      if (mode == 4) {
+        while (chunklen > 0) {
+          client.read();
+          chunklen --;
+        }
         continue;
+      }
       if (buffloc >= 0)
         buff[buffloc] = currentByte;
       // Set string end byte to nullbyte just in case
@@ -497,6 +503,9 @@ void load_reply() {
         buff[0] = '{';
         Serial.println("Reply loaded.");
         foundPost = true;
+        loadImage = draw_reply(String(buff));
+        draw_reply_number();
+        draw_progress_bar(0, 1);
         mode = 4;
         continue;
       }
@@ -523,9 +532,10 @@ void load_reply() {
     tft.setTextColor(0x0000, bgcolor);
     tft.drawString("...", tft.width() / 2, tft.height() / 2);
     load_reply();
-  } else if (draw_reply(String(buff))) {
+  } else if (loadImage) {
     draw_img(0);
     draw_reply_number();
+    draw_progress_bar(0, -1);
     Serial.println("Done!");
   } else {
     Serial.println("Multipage reload");
@@ -740,6 +750,9 @@ void draw_loading_text() {
  * Draws progress bar.
  */
 void draw_progress_bar(int progress, int total) {
+  if (total == -1) {
+    tft.drawFastHLine(0, tft.height() - 1, tft.width(), bgcolor);
+  }
   if (total == 0) return;
   int startPoint = (tft.width() * progress)/total;
   int endPoint = (tft.width() * (progress + 1))/total;
