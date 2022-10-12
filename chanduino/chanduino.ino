@@ -47,6 +47,8 @@
 #define CHANDUINO_THEME_THREADWATCHER_SECONDARY 0x0000
 #define CHANDUINO_THEME_LOADING 0xD800
 
+#define CHANDUINO_VERSION "0.8"
+
 #ifndef TFT_DISPOFF
 #define TFT_DISPOFF 0x28
 #endif
@@ -98,7 +100,7 @@ const char *root_ca = PSTR( \
 // Web client settings
 const int httpPort = 443;
 const char *host = "a.4cdn.org";
-const String useragent = "Chanduino/0.7";
+const String useragent = "Chanduino/" + String(CHANDUINO_VERSION);
 
 // Wifi config webserver variables
 WiFiServer server(80);
@@ -1065,7 +1067,14 @@ void setup() {
 
   tft.setSwapBytes(true);
   tft.setTextColor(CHANDUINO_THEME_POST_TEXT, CHANDUINO_THEME_BOARD_BACKGROUND_WS);
-  tft.drawString("Connecting...", tft.width() / 2, 8 * 7);
+
+  int vref = 1100;
+  uint16_t v = analogRead(ADC_PIN);
+  float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
+
+  tft.drawString("Chanduino v" + String(CHANDUINO_VERSION), tft.width() / 2, 8 * 7);
+  tft.drawString("Connecting...", tft.width() / 2, 8 * 8);
+  tft.drawString(String(battery_voltage) + "V", tft.width() / 2, 8 * 15);
 
   //Initialize buttons
   button_init();
