@@ -1346,3 +1346,31 @@ void heap() {
 void cb_connection_ok(void *pvParameter) {
   ESP_LOGI(TAG, "I have a connection!");
 }
+
+
+void test_all_boards() {
+  currentreply = 0;
+  while (currentreply != maxreply) {
+    // Load Board
+    load_board();
+    viewMode = 2;
+    Serial.println(board);
+    draw_loading_text();
+    load_posts();
+    load_reply();
+    delay(50);
+    // Unload Board
+    viewMode = 3;
+    bgcolor = CHANDUINO_THEME_BOARDSELECT_BACKGROUND;
+    currentreply = 0;
+    maxreply = -2;
+    show_boards();
+    currentreply += 1;
+    show_boards();
+  }
+}
+
+// Shitty unit tests
+void tests() {
+  test_all_boards();
+}
