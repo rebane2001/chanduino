@@ -15,6 +15,7 @@ Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display
 - Threadwatcher (turn on screen on new posts)
 - Customizable themes
 - HTTPS and keep-alive support
+- Progress bar
 - Doesn't let you respond to bait
 - Doesn't crash most of the time
 
@@ -42,6 +43,8 @@ You can change some of the settings through editing `#define`s in `chanduino.ino
    - Change how often threadwatcher should check for new posts (seconds)
  - CHANDUINO_DEFAULTBOARD "/replaceme/"
    - Auto-select a board of your choice on startup
+ - CHANDUINO_HIDE_PROGRESS_BAR 0/1
+   - Turn progrss bar on/off
 
 # Themes
 You can edit the colors used in the `THEME` section of `chanduino.ino`, similar to how you change the other settings. 
