@@ -901,6 +901,14 @@ void draw_img(bool full) {
 
   while (1){
     client.readStringUntil('\n');
+    if (client.peek() == '\r') {
+       if (client.readStringUntil('\n') == "\r"){
+         Serial.println("Something wrong while processing image header, returning dangerously.");
+         Serial.println(client.peek());
+         connectToa4cdn();
+         return;
+       }
+    }
     if (client.readStringUntil(':') == "Content-Length"){
       client.readStringUntil(' ');
       chunklen = String(client.readStringUntil('\r')).toInt();
@@ -957,6 +965,11 @@ void draw_img(bool full) {
   }
   client.readStringUntil('\n');
   */
+
+  if (buff[0] == '<') {
+    Serial.println("Got HTML while rendering image, skipping.");
+    return;
+  }
 
   // Just logging
   Serial.println("Image size:" + String(buffloc));
