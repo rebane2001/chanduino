@@ -392,13 +392,14 @@ void show_boards() {
   }
 
   int drawn = 0;
+  int draw_max = (tft.height() - 6) / 10;
   int i = 0;
   String desc = "";
 
 
   for (i = 0; i < boards_ws.size(); i++) {
     if (i > currentreply - 6) {
-      if (drawn < 12) {
+      if (drawn < draw_max) {
         tft.setTextDatum(TL_DATUM);
         tft.setTextColor(boards_ws[i] ? ((boards_ds[i].indexOf("Ponies") > 0) ? CHANDUINO_THEME_BOARDSELECT_P : CHANDUINO_THEME_BOARDSELECT_WS) : CHANDUINO_THEME_BOARDSELECT_NSFW, (i == currentreply) ? CHANDUINO_THEME_BOARDSELECT_SELECTION : bgcolor);
         tft.drawString(boards_ds[i], 6, 6 + drawn * 10);
@@ -604,6 +605,8 @@ bool draw_reply(String jsonsnippet) {
   int sx = 9;
   int sy = 6;
   int txtmode = 0;
+  int max_x = tft.width() - 15;
+  int max_y = tft.height() - 5;
   String entity = "";
   tft.setTextColor(CHANDUINO_THEME_POST_TITLE, bgcolor);
   tft.setTextSize(1);
@@ -616,7 +619,7 @@ bool draw_reply(String jsonsnippet) {
     if (sx < tnw + 12 && sy < tnh + 6 && currentMultiPage == 0) {
       sx = tnw + 12;
     }
-    if (sy > 130 && viewMode == 1) {
+    if (sy > max_y && viewMode == 1) {
       if (multiPage < 1) {
         multiPage = 0;
         break;
@@ -664,7 +667,7 @@ bool draw_reply(String jsonsnippet) {
         }
       }
       sx += 6;
-      if (sx > 225) {
+      if (sx > max_x) {
         sx = 9;
         sy += 10;
 
@@ -675,7 +678,7 @@ bool draw_reply(String jsonsnippet) {
         tft.drawString(cchar, sx, sy);
       }
       sx += 6;
-      if (sx > 225) {
+      if (sx > max_x) {
         sx = 9;
         sy += 10;
       }
@@ -699,10 +702,10 @@ bool draw_reply(String jsonsnippet) {
     if (currentreply == maxreply){
       seenAllNewPosts = true;
       newPostCount = 0;
-      tft.drawString("No new posts.", 9, 125);
+      tft.drawString("No new posts.", 9, tft.height() - 10);
       lastReadReply = replies[maxreply];
     }else{
-      tft.drawString(String(newPostCount) + (newPostCount == 1 ? " new post." : " new posts."), 9, 125);
+      tft.drawString(String(newPostCount) + (newPostCount == 1 ? " new post." : " new posts."), 9, tft.height() - 10);
     }
   }
   if (currentMultiPage < multiPage) {
@@ -722,7 +725,7 @@ bool draw_reply(String jsonsnippet) {
 void draw_reply_number() {
   tft.setTextColor(CHANDUINO_THEME_POST_TEXT, bgcolor);
   tft.setTextDatum(BR_DATUM);
-  tft.drawString(String(currentreply + 1) + "/" + String(maxreply + 1), 231, 125);
+  tft.drawString(String(currentreply + 1) + "/" + String(maxreply + 1), tft.width() - 9, tft.height() - 10);
 }
 
 /**
@@ -991,7 +994,7 @@ void draw_img(bool full) {
   uint16_t w = 0, h = 0;
   TJpgDec.getJpgSize(&w, &h, (const uint8_t*)buff, sizeof(buff));
   // show the pic in the middle or the edge depending on if it is a thumbnail
-  TJpgDec.drawJpg(full ? 120 - (w / 2) : 6, full ? 68 - (h / 2) : 6, (const uint8_t*)buff, sizeof(buff));
+  TJpgDec.drawJpg(full ? (tft.width() / 2) - (w / 2) : 6, full ? (tft.height() / 2) - (h / 2) : 6, (const uint8_t*)buff, sizeof(buff));
 }
 
 // Saves posts so we can restore the position later
@@ -1303,15 +1306,16 @@ bool connect_wifi() {
       Serial.println(IP);
       tft.setTextColor(CHANDUINO_THEME_POST_TEXT, CHANDUINO_THEME_BOARD_BACKGROUND_WS);
       tft.setTextDatum(MC_DATUM);
-      tft.drawString("No wifi detected!", tft.width() / 2, 8 * 2);
-      tft.drawString("Press any button to retry", tft.width() / 2, 8 * 3);
-      tft.drawString("or connect to the 'Chanduino'", tft.width() / 2, 8 * 4);
-      tft.drawString("Wifi and visit the following", tft.width() / 2, 8 * 5);
-      tft.drawString("URL on your device for setup:", tft.width() / 2, 8 * 6);
-      tft.drawString("http://" + ipToString(IP), tft.width() / 2, 8 * 7);
+      int base_height = tft.height()/2 - 67;
+      tft.drawString("No wifi detected!", tft.width() / 2, base_height + 8 * 2);
+      tft.drawString("Press any button to retry", tft.width() / 2, base_height + 8 * 3);
+      tft.drawString("or connect to the 'Chanduino'", tft.width() / 2, base_height + 8 * 4);
+      tft.drawString("Wifi and visit the following", tft.width() / 2, base_height + 8 * 5);
+      tft.drawString("URL on your device for setup:", tft.width() / 2, base_height + 8 * 6);
+      tft.drawString("http://" + ipToString(IP), tft.width() / 2, base_height + 8 * 7);
 
-      tft.drawString("Note: you might have to disable", tft.width() / 2, 8 * 14);
-      tft.drawString("mobile data on phones", tft.width() / 2, 8 * 15);
+      tft.drawString("Note: you might have to disable", tft.width() / 2, base_height + 8 * 14);
+      tft.drawString("mobile data on phones", tft.width() / 2, base_height + 8 * 15);
       wifiMode = 1;
       return false;
     }
