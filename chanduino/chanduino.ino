@@ -1319,8 +1319,8 @@ bool connect_wifi() {
       wifiMode = 1;
       return false;
     }
-    return true;
   }
+  return true;
 }
 
 String ipToString(IPAddress ip) {
