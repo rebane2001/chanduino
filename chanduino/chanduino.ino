@@ -56,12 +56,14 @@
 
 #define ADC_EN          14
 #define ADC_PIN         34
-#define BUTTON_1        35
-#define BUTTON_2        0
+
+#define BUTTON_UP       35
+#define BUTTON_UP_S3    14
+#define BUTTON_DOWN     0
 
 TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom library
-Button2 btn1(BUTTON_1);
-Button2 btn2(BUTTON_2);
+Button2 btn1;
+Button2 btn2;
 
 // 4chan root certificate (Baltimore CyberTrust Root)
 const char *root_ca = PSTR( \
@@ -164,6 +166,14 @@ WiFiClientSecure client;
  * Handles buttonpresses and navigation.
  */
 void button_init() {
+  // We detect whether we're on an S3 board and set the button accordingly
+  if (tft.width() < 300) {
+    btn1.begin(BUTTON_UP);
+  } else {
+    btn1.begin(BUTTON_UP_S3);
+  }
+  btn2.begin(BUTTON_DOWN);
+
   // When button down, activate backlight
   btn1.setPressedHandler([](Button2 & b) { updateLastTimes(); });
   btn2.setPressedHandler([](Button2 & b) { updateLastTimes(); });
@@ -590,6 +600,7 @@ bool draw_reply(String jsonsnippet) {
   //TEXT IS 6x8 CHARACTERS
   //4CHAN PREVIEW IMAGES ARE ???x125
   //SCREEN IS: 240x135
+  //S3 SCREEN IS: 320x170
   int sx = 9;
   int sy = 6;
   int txtmode = 0;
