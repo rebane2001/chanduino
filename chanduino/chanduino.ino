@@ -52,7 +52,7 @@
 
 
 
-#define CHANDUINO_VERSION "0.8"
+#define CHANDUINO_VERSION "1.0"
 
 #define ADC_EN          14
 #define ADC_PIN         34
