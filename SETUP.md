@@ -8,7 +8,7 @@ In order to flash chanduino to your ESP32 TTGO T-Display board, you will need a 
 1. Go to the menu and select Tools->Board->Boards Manager...
 1. Install the esp32 module, which provides support for the "ESP32 Dev Module". Use the latest available version
 1. Now go to the menu and select Tools->Manage Libraries...
-1. Install the libraries (and any specifically mentioned versions!) listed under the [Dependencies section of the README](https://github.com/rebane2001/chanduino/blob/master/README.md#dependencies)
+1. Install the libraries listed under the [Dependencies section of the README](https://github.com/rebane2001/chanduino/blob/master/README.md#dependencies)
 1. While not always required, you may need to select the correct port under the Tools->Port menu
 1. Now for the one slightly involved bit. We need to tell the TFT_eSPI library which display we have
    - Open your Arduino sketchbook folder (you can find it by going to the menu File->Preferences. It will be under "Sketchbook location")
@@ -25,7 +25,7 @@ In order to flash chanduino to your ESP32 TTGO T-Display board, you will need a 
    //#include <User_Setup.h>
    ```
  
-   - Change the other line:
+   - (either) Change the other line (for original T-Display):
  
    ```
    //#include <User_Setups/Setup25_TTGO_T_Display.h>
@@ -35,6 +35,18 @@ In order to flash chanduino to your ESP32 TTGO T-Display board, you will need a 
  
    ```
    #include <User_Setups/Setup25_TTGO_T_Display.h>
+   ```
+
+   - (or) Change the other line (for T-Display-S3):
+ 
+   ```
+   //#include <User_Setups/Setup206_LilyGo_T_Display_S3.h>
+   ```
+ 
+   to:
+ 
+   ```
+   #include <User_Setups/Setup206_LilyGo_T_Display_S3.h>
    ```
 
 1. Great! Now we just need to open, compile and upload the chanduino code to the board.

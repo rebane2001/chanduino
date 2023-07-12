@@ -1,5 +1,5 @@
 # Chanduino
-Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display). It started off as a project to practice embedded development and was made as a present for the /mlp/ Secret Santa, but 9 months later I decided to fix it up (added HTTPS support since 4chan is HTTPS-only now) and release it.
+Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display and T-Display-S3). It started off as a project to practice embedded development and was made as a present for the /mlp/ Secret Santa, but 9 months later I decided to fix it up (added HTTPS support since 4chan is HTTPS-only now) and release it.
 
 ## [Demo video](https://www.youtube.com/watch?v=RlFtYx4oX9U)
 
@@ -15,7 +15,8 @@ Chanduino is a standalone unofficial 4chan browser for the ESP32 (TTGO T-Display
 - Threadwatcher (turn on screen on new posts)
 - Customizable themes
 - HTTPS and keep-alive support
-- Progress bar
+- Variable screen resolution support
+- Loading bar
 - Doesn't let you respond to bait
 - Doesn't crash most of the time
 
@@ -52,12 +53,12 @@ You can edit the colors used in the `THEME` section of `chanduino.ino`, similar 
 Premade themes are available in the `themes` folder and a theme generator is available in `extra/theme_generator.html`.
 
 # Dependencies
-- [ArduinoJson 6.16.1](https://arduinojson.org/)
-- [TFT_eSPI 1.4.20](https://github.com/Bodmer/TFT_eSPI)
+- [ArduinoJson 6.21.2](https://arduinojson.org/)
+- [TFT_eSPI 2.5.0](https://github.com/Bodmer/TFT_eSPI)
 - [TJpg_Decoder](https://github.com/Bodmer/TJpg_Decoder)
-- [Button2](https://github.com/LennartHennigs/Button2)
+- [Button2 2.2.4](https://github.com/LennartHennigs/Button2)
 
 You can flash this project with the Arudino IDE.
 
 # Disclaimer
-I started this project with pretty much no experience in both C++ and embedded development. Thus, the code quality and memory management is rather poor and this project should not be used as a reference for learning. You can look at it for keks though.
+I started this project with pretty much no experience in both C++ and embedded development. Thus, the code quality and memory management is rather poor and this project should not be used as a reference for best practices.
