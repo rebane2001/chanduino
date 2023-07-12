@@ -49,6 +49,9 @@
 #define CHANDUINO_THEME_THREADWATCHER_SECONDARY 0x0000
 #define CHANDUINO_THEME_LOADING 0xD800
 
+
+
+
 #define CHANDUINO_VERSION "0.8"
 
 #ifndef TFT_DISPOFF
@@ -887,9 +890,10 @@ void draw_img(bool full) {
     return;
 
   connectToa4cdn();
-
-  Serial.print("GET /" + board + "/" + tim + "s.jpg HTTP/1.1\r\n");
-  client.print("GET /" + board + "/" + tim + "s.jpg HTTP/1.1\r\n");
+ 
+  uint32_t cacheBuster = esp_random();
+  Serial.print("GET /" + board + "/" + tim + "s.jpg?" + cacheBuster + " HTTP/1.1\r\n");
+  client.print("GET /" + board + "/" + tim + "s.jpg?" + cacheBuster + " HTTP/1.1\r\n");
   client.print("Host: i.4cdn.org\r\n");
   client.print("User-Agent: " + useragent + "\r\n");
   client.print("Connection: keep-alive\r\n");
